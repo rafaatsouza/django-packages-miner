@@ -46,7 +46,7 @@ class DjangoPackagesApi:
         packages = self._get_packages_by_response(json_response)
         next_request = json_response['meta'].get('next') or ''
         
-        return packages, next_request.replace(PACKAGES_ROUTE, '')
+        return packages, next_request.replace(self._PACKAGES_ROUTE, '')
 
 
     def get_package(self, id_package, logger=None):

@@ -16,7 +16,7 @@ def check_valid_repo_url(repo_url):
     regex = re.compile(
         r'^(http(s){0,1}\:\/\/){0,1}((www\.){0,1})'
         r'((' + regex_domains + r')\.com\/)'
-        r'([a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+)'
+        r'([a-zA-Z0-9_.-]+\/([a-zA-Z0-9_.-]+\/)?[a-zA-Z0-9_.-]+)'
         r'((\/[a-zA-Z0-9_.-\/]+)|\Z)', re.IGNORECASE)
 
     if not re.match(regex, repo_url):
@@ -144,7 +144,7 @@ if __name__ == '__main__':
     next = None
 
     while packages_remaining:
-        packages, next = django_packages_api.get_packages(next)
+        packages, next = django_packages_api.get_packages(next, logger)
         packages_remaining = len(next) > 0
         for package in packages:
             with open(output_file, 'a') as f:

@@ -1,5 +1,6 @@
+import re
+
 from datetime import datetime
-from time import mktime
 from enum import Enum
 
 
@@ -7,23 +8,34 @@ class Platform(Enum):
     GITHUB = (
         'github',
         lambda repo_url, token: _get_github_repo_info(repo_url, token),
+        re.compile(r'(.*)(github\.com\/)'
+            r'([a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+)'
+            r'((\/[a-zA-Z0-9_.-\/]+)|\Z)', re.IGNORECASE)
     )
 
     GITLAB = (
         'gitlab',
         lambda repo_url, token: _get_gitlab_repo_info(repo_url, token),
+        re.compile(r'(.*)(gitlab\.com\/)'
+            r'([a-zA-Z0-9_.-]+\/([a-zA-Z0-9_.-]+\/)?[a-zA-Z0-9_.-]+)'
+            r'((\/[a-zA-Z0-9_.-\/]+)|\Z)', re.IGNORECASE)
     )
 
-    def __new__(cls, domain, get_repo_info=None):
+    def __new__(cls, domain, get_repo_info, get_id_regex):
         obj = object.__new__(cls)
         obj._value_ = domain
         obj._domain_ = domain
         obj._get_repo_info_ = get_repo_info
+        obj._get_id_regex_ = get_id_regex
         return obj
 
     @property
     def domain(self):
         return self._domain_
+
+    @property
+    def get_id_regex(self):
+        return self._get_id_regex_
 
     @property
     def get_repo_info(self):
@@ -46,22 +58,10 @@ class Platform(Enum):
             return Platform.GITLAB
 
 
-def get_org_repo_name_regex(domain, url):
-    import re
-    
-    regex = re.compile(r'(.*)(' + domain + r'\.com\/)'
-        r'([a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+)'
-        r'((\/[a-zA-Z0-9_.-\/]+)|\Z)', re.IGNORECASE)
-
-    return re.match(regex, url).groups()[2]
-
-
 def _get_github_repo_info(repo_url, token):
     from github import Github
 
-    org_repo_name = get_org_repo_name_regex(
-        Platform.GITHUB.domain, repo_url
-    )
+    org_repo_name = re.match(Platform.GITHUB.get_id_regex, repo_url).groups()[2]
 
     repo = (Github(token)).get_repo(org_repo_name)
 
@@ -94,9 +94,7 @@ def _get_gitlab_repo_info(repo_url, token):
     
     g = Gitlab('https://gitlab.com', private_token=token)
 
-    org_repo_name = get_org_repo_name_regex(
-        Platform.GITLAB.domain, repo_url
-    )
+    org_repo_name = re.match(Platform.GITLAB.get_id_regex, repo_url).groups()[2]
 
     repo = g.projects.get(org_repo_name)
 

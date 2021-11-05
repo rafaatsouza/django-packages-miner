@@ -130,7 +130,7 @@ if __name__ == '__main__':
         'gitlab': os.environ['GITLAB_TOKEN'],
     }
 
-    output_file = os.environ.get('OUTPUT_FILE') or 'data.csv'
+    output_file = '../data/{}'.format(os.environ.get('OUTPUT_FILE') or 'data.csv')
 
     # TODO: add language
     columns = [

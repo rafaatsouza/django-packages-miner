@@ -30,6 +30,13 @@ class Platform(Enum):
         return self._get_repo_info_
 
     @staticmethod
+    def get_valid_domains():
+        return [
+            Platform.GITHUB.domain,
+            Platform.GITLAB.domain,
+        ]
+
+    @staticmethod
     def get_platform(repo_url):
         repo_url = repo_url.lower()
 

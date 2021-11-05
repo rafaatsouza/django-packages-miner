@@ -17,7 +17,7 @@ class DjangoPackagesApi:
                 'grids': _treat_grids(pkg['grids']) if pkg['grids'] else '',
                 'repo_url': pkg['repo_url'] if pkg['repo_url'] else '',
                 'repo_watchers': pkg['repo_watchers'] if pkg['repo_watchers'] else '',
-                'usage_count': pkg['usage_count'] if pkg['usage_count'] else ''
+                'usage_count': pkg['usage_count'] if pkg['usage_count'] else 0
             })
         
         return packages

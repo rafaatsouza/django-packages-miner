@@ -6,23 +6,20 @@ from control_version import Platform
 from django_packages import DjangoPackagesApi
 
 def check_valid_repo_url(repo_url):
+    regex_domains = ''
+    for domain in Platform.get_valid_domains():
+        if regex_domains == '':
+            regex_domains = domain
+        else:
+            regex_domains = '{}|{}'.format(regex_domains, domain)
+
     regex = re.compile(
-        r'^(?:http|ftp)s?://' # http:// or https://
-        r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|' #domain...
-        r'localhost|' #localhost...
-        r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})' # ...or ip
-        r'(?::\d+)?' # optional port
-        r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+        r'^(http(s){0,1}\:\/\/){0,1}((www\.){0,1})'
+        r'((' + regex_domains + r')\.com\/)'
+        r'([a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+)'
+        r'((\/[a-zA-Z0-9_.-\/]+)|\Z)', re.IGNORECASE)
 
     if not re.match(regex, repo_url):
-        return False
-
-    valid_domains = [
-        Platform.GITHUB.domain, 
-        Platform.GITLAB.domain
-    ]
-
-    if len([d for d in valid_domains if d in repo_url.lower()]) == 0:
         return False
 
     try:

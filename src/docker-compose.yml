@@ -1,0 +1,10 @@
+version: '3.7'
+
+services:
+  mining:
+    build: .
+    ports:
+      - 80:80 
+    environment: 
+      - "GITHUB_TOKEN=${GITHUB_TOKEN}"
+      - "GITLAB_TOKEN=${GITLAB_TOKEN}"

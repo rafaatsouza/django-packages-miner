@@ -23,7 +23,7 @@ class DjangoPackagesApi:
         return packages
 
 
-    def get_packages(self, next):
+    def get_packages(self, next, logger=None):
 
         next = next or '/?limit=100&offset=0'
         PACKAGES_ROUTE = '/api/v3/packages'
@@ -31,10 +31,15 @@ class DjangoPackagesApi:
         url = '{}{}{}'.format(self._DJANGO_PACKAGES_BASE_URL, PACKAGES_ROUTE, next)
 
         offset = ' to offset {}'.format(next[next.rfind('=')+1:])
-        print('Requesting packages{}...'.format(offset))
+        
+        if logger:
+            logger.info('Requesting packages for offset {}...'.format(offset))
+
         packages_response = requests.get(url)
         packages_response.raise_for_status()
-        print('Packages request successfully\n-----------')
+        
+        if logger:
+            logger.info('Packages request successfully for offset {}.'.format(offset))
 
         json_response = packages_response.json()
 

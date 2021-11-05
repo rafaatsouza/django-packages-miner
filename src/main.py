@@ -123,7 +123,7 @@ def get_header_line(columns):
 
 
 if __name__ == '__main__':
-    logger = get_logger(os.environ.get('LOG_FILE_NAME') or 'file.log')
+    logger = get_logger('../data/{}'.format(os.environ.get('LOG_FILE_NAME') or 'file.log'))
     
     tokens = {
         'github': os.environ['GITHUB_TOKEN'],

@@ -1,0 +1,62 @@
+import requests
+
+class DjangoPackagesApi:
+    _DJANGO_PACKAGES_BASE_URL = 'https://djangopackages.org'
+
+    def _get_packages_by_response(self, json_response):
+        objects = json_response['objects']
+        packages = []
+
+        for pkg in objects:
+            packages.append({
+                'created': pkg['created'] if pkg['created'] else '',
+                'slug': pkg['slug'] if pkg['slug'] else '',
+                'title': pkg['title'] if pkg['title'] else '',
+                'category': _treat_category(pkg['category']) if pkg['category'] else '',
+                'documentation_url': pkg['documentation_url'] if pkg['documentation_url'] else '',
+                'grids': _treat_grids(pkg['grids']) if pkg['grids'] else '',
+                'repo_url': pkg['repo_url'] if pkg['repo_url'] else '',
+                'repo_watchers': pkg['repo_watchers'] if pkg['repo_watchers'] else '',
+                'usage_count': pkg['usage_count'] if pkg['usage_count'] else ''
+            })
+        
+        return packages
+
+
+    def get_packages(self, next):
+
+        next = next or '/?limit=100&offset=0'
+        PACKAGES_ROUTE = '/api/v3/packages'
+
+        url = '{}{}{}'.format(self._DJANGO_PACKAGES_BASE_URL, PACKAGES_ROUTE, next)
+
+        offset = ' to offset {}'.format(next[next.rfind('=')+1:])
+        print('Requesting packages{}...'.format(offset))
+        packages_response = requests.get(url)
+        packages_response.raise_for_status()
+        print('Packages request successfully\n-----------')
+
+        json_response = packages_response.json()
+
+        packages = self._get_packages_by_response(json_response)
+        next_request = json_response['meta'].get('next') or ''
+        
+        return packages, next_request.replace(PACKAGES_ROUTE, '')
+
+
+def _treat_grids(grids):
+    if not grids:
+        return ''
+    grid_value = ''
+    for grid in grids:
+        if grid_value == '':
+            grid_value = grid.replace('/api/v3/grids/', '').replace('/', '')
+        else:
+            grid_value = '{},{}'.format(grid_value, grid.replace('/api/v3/grids/', '').replace('/', ''))
+    return grid_value
+
+
+def _treat_category(category):
+    if not category:
+        return ''
+    return category.replace('/api/v3/categories/', '').replace('/','')

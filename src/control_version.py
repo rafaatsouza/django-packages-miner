@@ -59,11 +59,17 @@ class Platform(Enum):
 
 
 def _get_github_repo_info(repo_url, token):
-    from github import Github
+    from github import Github, GithubException
 
     org_repo_name = re.match(Platform.GITHUB.get_id_regex, repo_url).groups()[2]
-
-    repo = (Github(token)).get_repo(org_repo_name)
+    
+    try:
+        repo = (Github(token)).get_repo(org_repo_name)
+    except GithubException as err:
+        if err._GithubException__status == 404:
+            return None
+        else:
+            raise err
 
     if not repo:
         return None
@@ -91,12 +97,18 @@ def _get_github_repo_info(repo_url, token):
 
 def _get_gitlab_repo_info(repo_url, token):
     from gitlab import Gitlab
+    from gitlab.exceptions import GitlabGetError
     
     g = Gitlab('https://gitlab.com', private_token=token)
 
     org_repo_name = re.match(Platform.GITLAB.get_id_regex, repo_url).groups()[2]
 
-    repo = g.projects.get(org_repo_name)
+    try:
+        repo = g.projects.get(org_repo_name)
+    except GitlabGetError as err:
+        if err.response_code == 404:
+            return None
+        raise err
 
     if not repo:
         return None

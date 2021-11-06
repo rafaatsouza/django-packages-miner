@@ -24,23 +24,15 @@ class DjangoPackagesApi:
         return packages
 
 
-    def get_packages(self, next, logger=None):
+    def get_packages(self, next):
 
         next = next or '/?limit=100&offset=0'
 
         url = '{}{}{}'.format(self._DJANGO_PACKAGES_BASE_URL, self._PACKAGES_ROUTE, next)
 
-        offset = ' to offset {}'.format(next[next.rfind('=')+1:])
-        
-        if logger:
-            logger.info('Requesting packages for offset {}...'.format(offset))
-
         packages_response = requests.get(url)
         packages_response.raise_for_status()
         
-        if logger:
-            logger.info('Packages request successfully for offset {}.'.format(offset))
-
         json_response = packages_response.json()
 
         packages = self._get_packages_by_response(json_response)
@@ -49,19 +41,13 @@ class DjangoPackagesApi:
         return packages, next_request.replace(self._PACKAGES_ROUTE, '')
 
 
-    def get_package(self, id_package, logger=None):
+    def get_package(self, id_package):
 
         url = '{}{}/{}'.format(self._DJANGO_PACKAGES_BASE_URL, self._PACKAGES_ROUTE, id_package)
         
-        if logger:
-            logger.info('Requesting package {}...'.format(id_package))
-
         package_response = requests.get(url)
         package_response.raise_for_status()
         
-        if logger:
-            logger.info('Package {} request successfully.'.format(id_package))
-
         pkg = package_response.json()
 
         return {

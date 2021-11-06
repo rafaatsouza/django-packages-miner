@@ -93,6 +93,17 @@ def get_csv_line_by_package(columns, package, tokens):
     return line
 
 
+def write_package_csv_line(output_file, package, columns, tokens, logger):
+    with open(output_file, 'a') as f:
+        try:
+            f.write(get_csv_line_by_package(columns, package, tokens) + '\n')
+        except BaseException as error:
+            logger.error('Unknown error at package {}'.format(package['slug']), error)
+            return False
+
+    return True
+
+
 def get_logger(log_file_name):
     import logging
     
@@ -140,6 +151,7 @@ if __name__ == '__main__':
         f.write('{}\n'.format(get_header_line(columns)))
 
     django_packages_api = DjangoPackagesApi()
+    failed_packages = []
     packages_remaining = True
     next = None
 
@@ -147,10 +159,9 @@ if __name__ == '__main__':
         packages, next = django_packages_api.get_packages(next, logger)
         packages_remaining = len(next) > 0
         for package in packages:
-            with open(output_file, 'a') as f:
-                try:
-                    f.write(get_csv_line_by_package(columns, package, tokens) + '\n')
-                except BaseException as error:
-                    logger.error('Unknown error at package {}'.format(package['slug']))
-                else:
-                    logger.info('Finished package {}'.format(package['slug']))
+            if not write_package_csv_line(output_file, package, columns, tokens, logger):
+                failed_packages.append(package['slug'])
+
+    for package_id in failed_packages:
+        package = django_packages_api.get_package(package_id, logger)
+        write_package_csv_line(output_file, package, columns, tokens, logger)

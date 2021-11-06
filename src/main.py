@@ -156,12 +156,12 @@ if __name__ == '__main__':
     next = None
 
     while packages_remaining:
-        packages, next = django_packages_api.get_packages(next, logger)
+        packages, next = django_packages_api.get_packages(next)
         packages_remaining = len(next) > 0
         for package in packages:
             if not write_package_csv_line(output_file, package, columns, tokens, logger):
                 failed_packages.append(package['slug'])
 
     for package_id in failed_packages:
-        package = django_packages_api.get_package(package_id, logger)
+        package = django_packages_api.get_package(package_id)
         write_package_csv_line(output_file, package, columns, tokens, logger)

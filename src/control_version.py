@@ -66,8 +66,19 @@ def _get_github_repo_info(repo_url, token):
     try:
         repo = (Github(token)).get_repo(org_repo_name)
     except GithubException as err:
-        if err._GithubException__status == 404:
+        status = err._GithubException__status
+        message = err._GithubException__data['message']
+
+        if status == 404:
             return None
+        elif status == 403 and message.startswith('API rate limit exceeded for'):
+            try:
+                repo = (Github()).get_repo(org_repo_name)
+            except GithubException as error:
+                if error._GithubException__status == 404:
+                    return None
+                else:
+                    raise error
         else:
             raise err
 

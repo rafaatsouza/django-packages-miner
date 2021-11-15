@@ -22,14 +22,14 @@ def get_logger(log_file_name):
 
 
 if __name__ == '__main__':
-    logger = get_logger('../data/{}'.format(os.environ.get('LOG_FILE_NAME') or 'file.log'))
+    logger = get_logger('../../data/{}'.format(os.environ.get('LOG_FILE_NAME') or 'file.log'))
     
     tokens = {
         'github': os.environ['GITHUB_TOKEN'],
         'gitlab': os.environ['GITLAB_TOKEN'],
     }
 
-    output_file = '../data/{}'.format(os.environ.get('OUTPUT_FILE') or 'data.csv')
+    output_file = '../../data/{}'.format(os.environ.get('OUTPUT_FILE') or 'data.csv')
 
     with open(output_file, 'a') as f:
         f.write('{}\n'.format(ReportRegister.get_header_line()))

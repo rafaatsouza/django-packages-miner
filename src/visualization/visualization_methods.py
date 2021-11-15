@@ -33,3 +33,25 @@ class VisualizationMethods:
         ax.set_title(title)    
         ax.grid()
         
+
+    @staticmethod
+    def show_bar_chart_by_dict(dict, xlabel, ylabel, title, color=None):
+        import matplotlib.pyplot as plt
+
+        keys = list(dict.keys())
+        values = list(dict.values())
+        
+        _ = plt.figure(figsize = (24, 8))
+        
+        if color:
+            plt.bar(keys, values, color=color, width=0.4)
+        else:
+            plt.bar(keys, values, width=0.4)
+        
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel)
+        plt.xticks(rotation=45, ha='right')
+        plt.title(title)
+        plt.grid()
+        plt.tight_layout()
+        plt.show()

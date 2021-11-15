@@ -1,3 +1,10 @@
+def _get_label_with_abs_and_perc(p, total):
+    absolute = '{:.0f}'.format(p * total / 100)
+    percentage = '{0:.0%}'.format(p/100.0)
+
+    return '{} ({})'.format(absolute, percentage)
+
+
 class VisualizationMethods:
     
     @staticmethod
@@ -28,7 +35,7 @@ class VisualizationMethods:
         for val in data:
             full_len = full_len + val
 
-        ax.pie(data, labels=labels, autopct=lambda p: VisualizationMethods._get_pie_label(p, full_len), shadow=True, startangle=45)
+        ax.pie(data, labels=labels, autopct=lambda p: _get_label_with_abs_and_perc(p, full_len), shadow=True, startangle=45)
         ax.axis('equal')
         ax.set_title(title)    
         ax.grid()

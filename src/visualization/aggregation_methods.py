@@ -1,15 +1,27 @@
+def _is_unwanted(str, unwanteds=None, unwanteds_regex=None):
+    import re
+
+    if unwanteds and str in unwanteds:
+        return True
+    
+    if unwanteds_regex:
+        for unw_reg in unwanteds_regex:
+            if re.match(unw_reg, str):
+                return True
+
+    return False
+
 class AggregationMethods:
     
-    #TODO: Set unwanted by regex
     @staticmethod
-    def get_concate_and_freq(values, unwanted=None):
+    def get_concate_and_freq(values, unwanteds=None, unwanteds_regex=None):
         concate = ''
         freq = {}
 
         for grid in values:
             parts = grid.split(',')
             for part in parts:
-                if unwanted and part in unwanted:
+                if _is_unwanted(part, unwanteds, unwanteds_regex):
                     continue
 
                 if part in freq:

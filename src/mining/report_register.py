@@ -36,18 +36,20 @@ class ReportRegister():
     _COLUMNS = [
         'dp_slug', 'dp_category', 'dp_grids', 'dp_usage_count', 'has_valid_repo_url', 
         'dp_repo_url', 'has_valid_repo', 'platform', 'repo_id', 'repo_stars', 
-        'repo_last_modified', 'repo_forks', 'repo_open_issues', 'repo_topics'
+        'repo_last_modified', 'repo_forks', 'repo_open_issues', 'repo_topics',
+        'repo_size', 'repo_commits', 'repo_has_readme'
     ]
 
     @staticmethod
     def get_header_line():
         return (
             'dp_slug;dp_category;dp_grids;dp_usage_count;has_valid_repo_url;dp_repo_url;has_valid_repo;'
-            'platform;repo_id;repo_stars;repo_last_modified;repo_forks;repo_open_issues;repo_topics'
+            'platform;repo_id;repo_stars;repo_last_modified;repo_forks;repo_open_issues;repo_topics;'
+            'repo_size;repo_commits;repo_has_readme'
         )
 
 
-    def __init__(self, package, tokens):
+    def __init__(self, package, tokens, temp_path):
         self.slug = package['slug']
         self.category = package['category']
         self.grids = package['grids']
@@ -55,13 +57,15 @@ class ReportRegister():
         self.has_valid_repo_url = _check_valid_repo_url(package['repo_url'])
         self.repo_url = package['repo_url'] if self.has_valid_repo_url else ''
         self.has_valid_repo = False
+        self.repo_has_readme = False
 
-        if self.has_valid_repo_url:            
+
+        if self.has_valid_repo_url:
             platform = Platform.get_platform(package['repo_url'])
             self.platform = platform.domain
 
             token = self._get_token(platform, tokens)
-            repo_info = platform.get_repo_info(package['repo_url'], token)
+            repo_info = platform.get_repo_info(package['repo_url'], token, temp_path)
 
             if repo_info:
                 self.has_valid_repo = True
@@ -70,7 +74,10 @@ class ReportRegister():
                 self.repo_last_modified = repo_info['repo_last_modified']
                 self.repo_forks = repo_info['repo_forks']
                 self.repo_open_issues = repo_info['repo_open_issues']
-                self.repo_topics = repo_info['repo_topics']
+                self.repo_topics = repo_info['repo_topics']                
+                self.repo_size = repo_info['repo_size']
+                self.repo_commits = repo_info['repo_commits']
+                self.repo_has_readme = repo_info['repo_has_readme']
             
 
     def get_line(self):
@@ -93,19 +100,22 @@ class ReportRegister():
         line = '{};{}'.format(line, self.platform)
 
         if not self.has_valid_repo:
-            for _ in range(len(self._COLUMNS) - 8):
+            for _ in range(len(self._COLUMNS) - 9):
                 line = '{};{}'.format(line, '')
-            
-            return line
+          
+            return '{};{}'.format(line, False)
 
-        return '{};{};{};{};{};{};{}'.format(
+        return '{};{};{};{};{};{};{};{};{};{}'.format(
             line, 
             self.repo_id, 
             self.repo_stars,     
             self.repo_last_modified, 
             self.repo_forks, 
             self.repo_open_issues, 
-            self.repo_topics
+            self.repo_topics,
+            self.repo_size,
+            self.repo_commits,
+            self.repo_has_readme
         )
 
 

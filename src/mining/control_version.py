@@ -7,7 +7,8 @@ from enum import Enum
 class Platform(Enum):
     GITHUB = (
         'github',
-        lambda repo_url, token: _get_github_repo_info(repo_url, token),
+        'https://github.com/',
+        lambda repo_url, token, temp_path: _get_github_repo_info(repo_url, token, temp_path),
         re.compile(r'(.*)(github\.com\/)'
             r'([a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+)'
             r'((\/[a-zA-Z0-9_.-\/]+)|\Z)', re.IGNORECASE)
@@ -15,16 +16,18 @@ class Platform(Enum):
 
     GITLAB = (
         'gitlab',
-        lambda repo_url, token: _get_gitlab_repo_info(repo_url, token),
+        'https://gitlab.com/',
+        lambda repo_url, token, temp_path: _get_gitlab_repo_info(repo_url, token, temp_path),
         re.compile(r'(.*)(gitlab\.com\/)'
             r'([a-zA-Z0-9_.-]+\/([a-zA-Z0-9_.-]+\/)?[a-zA-Z0-9_.-]+)'
             r'((\/[a-zA-Z0-9_.-\/]+)|\Z)', re.IGNORECASE)
     )
 
-    def __new__(cls, domain, get_repo_info, get_id_regex):
+    def __new__(cls, domain, address, get_repo_info, get_id_regex):
         obj = object.__new__(cls)
         obj._value_ = domain
         obj._domain_ = domain
+        obj._address_ = address
         obj._get_repo_info_ = get_repo_info
         obj._get_id_regex_ = get_id_regex
         return obj
@@ -32,6 +35,10 @@ class Platform(Enum):
     @property
     def domain(self):
         return self._domain_
+
+    @property
+    def address(self):
+        return self._address_
 
     @property
     def get_id_regex(self):
@@ -58,13 +65,14 @@ class Platform(Enum):
             return Platform.GITLAB
 
 
-def _get_github_repo_info(repo_url, token):
+def _get_github_repo_info(repo_url, token, temp_path):
     from github import Github, GithubException
 
     org_repo_name = re.match(Platform.GITHUB.get_id_regex, repo_url).groups()[2]
-    
+
     try:
         repo = (Github(token)).get_repo(org_repo_name)
+        _ = repo.get_contents('/') # check if repo is empty
     except GithubException as err:
         status = err._GithubException__status
         message = err._GithubException__data['message']
@@ -94,6 +102,10 @@ def _get_github_repo_info(repo_url, token):
         else:
             topics = '{},{}'.format(topics, topic)
 
+    repo_size, repo_commits, repo_has_readme = (
+        _get_repo_folder_info('{}{}'.format(Platform.GITHUB.address, org_repo_name), temp_path)
+    )
+
     return {
         'repo_id': org_repo_name, 
         'repo_stars': repo.stargazers_count or 0, 
@@ -102,11 +114,14 @@ def _get_github_repo_info(repo_url, token):
         ), 
         'repo_forks': repo.forks_count, 
         'repo_open_issues': repo.open_issues_count, 
-        'repo_topics': topics
+        'repo_topics': topics,
+        'repo_size': repo_size,
+        'repo_commits': repo_commits,
+        'repo_has_readme': repo_has_readme,
     }
 
 
-def _get_gitlab_repo_info(repo_url, token):
+def _get_gitlab_repo_info(repo_url, token, temp_path):
     from gitlab import Gitlab
     from gitlab.exceptions import GitlabGetError
     
@@ -133,11 +148,59 @@ def _get_gitlab_repo_info(repo_url, token):
         else:
             topics = '{},{}'.format(topics, topic)
 
+    repo_size, repo_commits, repo_has_readme = (
+        _get_repo_folder_info('{}{}'.format(Platform.GITLAB.address, org_repo_name), temp_path)
+    )
+
     return {
         'repo_id': org_repo_name, 
         'repo_stars': repo.star_count,
         'repo_last_modified': '{}:000'.format(last_modified), 
         'repo_forks': repo.forks_count, 
         'repo_open_issues': repo.open_issues_count, 
-        'repo_topics': topics
+        'repo_topics': topics,
+        'repo_size': repo_size,
+        'repo_commits': repo_commits,
+        'repo_has_readme': repo_has_readme,
     }
+
+
+def _get_repo_folder_info(repo_url, temp_path):
+    import uuid, os, shutil
+    from git import Repo
+
+    readme_reg = re.compile(r'^(README)(\.)(.+)$', re.IGNORECASE)
+    path = '{}{}{}/'.format(temp_path, '' if temp_path.endswith('/') else '/', uuid.uuid4().hex)
+
+    Repo.clone_from(repo_url, path)
+
+    size = _get_folder_size(path)
+    commits = _get_total_commits(Repo(path))
+    has_readme = len([f for f in os.listdir(path) if re.match(readme_reg, f)]) > 0
+
+    shutil.rmtree(path)
+    return size, commits, has_readme
+
+
+def _get_total_commits(repo):
+		all_commits = repo.iter_commits()
+		commits = 0
+		while True:
+			try:
+				_ = next(all_commits)
+				commits = commits + 1
+			except StopIteration:
+				break
+		return commits
+
+
+def _get_folder_size(folder_path):
+    import os
+    size = 0
+    for path, _, files in os.walk(folder_path):
+        if not os.path.islink(path):
+            for f in files:
+                fp = os.path.join(path, f)
+                if not os.path.islink(fp):
+                    size += os.path.getsize(fp)
+    return size

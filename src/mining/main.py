@@ -2,7 +2,6 @@ import os
 
 from django_packages import DjangoPackagesApi
 from report_register import ReportRegister
-from control_version import Platform
 
 
 def get_logger(log_file_name):
@@ -21,10 +20,14 @@ def get_logger(log_file_name):
     return logger
 
 
-def get_finished_packages(output_file):
+def get_finished_slugs_and_packages(output_file):
     import pandas as pd
     df = pd.read_csv(output_file, sep=';')
-    return list(df['dp_slug'].values)
+    
+    slugs = list(df['dp_slug'].values)
+    packages = list(df[df['repo_id'].str.len() > 0]['repo_id'].values)
+
+    return slugs, packages
 
 
 if __name__ == '__main__':
@@ -37,16 +40,17 @@ if __name__ == '__main__':
     }
 
     output_file = '{}{}'.format(data_path, os.environ.get('OUTPUT_FILE') or 'data.csv')
+    finished_slugs = []
     finished_packages = []
 
     if not os.path.exists(output_file):
         with open(output_file, 'a') as f:
             f.write('{}\n'.format(ReportRegister.get_header_line()))
     else:
-        finished_packages = get_finished_packages(output_file)
+        finished_slugs, finished_packages = get_finished_slugs_and_packages(output_file)
 
     django_packages_api = DjangoPackagesApi()
-    failed_packages = []
+    failed_slugs = []
     packages_remaining = True
     next = None
 
@@ -54,25 +58,30 @@ if __name__ == '__main__':
         packages, next = django_packages_api.get_packages(next)
         packages_remaining = len(next) > 0
         for package in packages:
-            if not (package['slug'] in finished_packages):
+            if not (package['slug'] in finished_slugs):
                 try:
-                    register = ReportRegister(package, tokens, data_path)                
-                    with open(output_file, 'a') as f:
-                        f.write(register.get_line() + '\n')
-                    finished_packages.append(package['slug'])
+                    register = ReportRegister(package, tokens, data_path)
+                    if not register.repo_id or register.repo_id not in finished_packages:
+                        with open(output_file, 'a') as f:
+                            f.write(register.get_line() + '\n')
+                        if register.repo_id:
+                            finished_packages.append(register.repo_id)
+                    finished_slugs.append(package['slug'])
                 except BaseException as error:
                     logger.exception('Unknown error at package {}'.format(package['slug']))
-                    failed_packages.append(package['slug'])
+                    failed_slugs.append(package['slug'])
             else:
                 print('{} already in output file'.format(package['slug']))
 
-    for package_id in failed_packages:
+    for package_id in failed_slugs:
         package = django_packages_api.get_package(package_id)
         try:
             register = ReportRegister(package, tokens, data_path)
-            if package['slug'] not in finished_packages:
+            if not register.repo_id or register.repo_id not in finished_packages:
                 with open(output_file, 'a') as f:
                     f.write(register.get_line() + '\n')
-                finished_packages.append(register.repo_id)                        
+                if register.repo_id:
+                    finished_packages.append(register.repo_id)
+            finished_slugs.append(register.repo_id)                        
         except BaseException as error:
             logger.exception('Unknown error at package {}'.format(package['slug']))

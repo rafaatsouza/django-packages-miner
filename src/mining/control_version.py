@@ -169,7 +169,7 @@ def _get_repo_folder_info(repo_url, temp_path):
     import uuid, os, shutil
     from git import Repo
 
-    readme_reg = re.compile(r'^(README)(\.)(.+)$', re.IGNORECASE)
+    readme_reg = re.compile(r'^(README)((\..+)|\Z)', re.IGNORECASE)
     path = '{}{}{}/'.format(temp_path, '' if temp_path.endswith('/') else '/', uuid.uuid4().hex)
 
     Repo.clone_from(repo_url, path)

@@ -58,6 +58,7 @@ class ReportRegister():
         self.repo_url = package['repo_url'] if self.has_valid_repo_url else ''
         self.has_valid_repo = False
         self.repo_has_readme = False
+        self.repo_id = None
 
 
         if self.has_valid_repo_url:

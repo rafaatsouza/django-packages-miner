@@ -102,7 +102,7 @@ def _get_github_repo_info(repo_url, token, temp_path):
         else:
             topics = '{},{}'.format(topics, topic)
 
-    repo_size, repo_commits, repo_has_readme = (
+    repo_size, repo_commits, repo_has_readme, repo_has_installed_app_ref = (
         _get_repo_folder_info('{}{}'.format(Platform.GITHUB.address, org_repo_name), temp_path)
     )
 
@@ -118,6 +118,7 @@ def _get_github_repo_info(repo_url, token, temp_path):
         'repo_size': repo_size,
         'repo_commits': repo_commits,
         'repo_has_readme': repo_has_readme,
+        'repo_has_installed_app_ref': repo_has_installed_app_ref,
     }
 
 
@@ -148,7 +149,7 @@ def _get_gitlab_repo_info(repo_url, token, temp_path):
         else:
             topics = '{},{}'.format(topics, topic)
 
-    repo_size, repo_commits, repo_has_readme = (
+    repo_size, repo_commits, repo_has_readme, repo_has_installed_app_ref = (
         _get_repo_folder_info('{}{}'.format(Platform.GITLAB.address, org_repo_name), temp_path)
     )
 
@@ -162,24 +163,46 @@ def _get_gitlab_repo_info(repo_url, token, temp_path):
         'repo_size': repo_size,
         'repo_commits': repo_commits,
         'repo_has_readme': repo_has_readme,
+        'repo_has_installed_app_ref': repo_has_installed_app_ref,
     }
 
 
 def _get_repo_folder_info(repo_url, temp_path):
-    import uuid, os, shutil
+    import uuid, shutil
     from git import Repo
 
-    readme_reg = re.compile(r'^(README)((\..+)|\Z)', re.IGNORECASE)
     path = '{}{}{}/'.format(temp_path, '' if temp_path.endswith('/') else '/', uuid.uuid4().hex)
 
     Repo.clone_from(repo_url, path)
 
     size = _get_folder_size(path)
     commits = _get_total_commits(Repo(path))
-    has_readme = len([f for f in os.listdir(path) if re.match(readme_reg, f)]) > 0
+    has_readme, has_installed_apps_ref = _check_readme(path)
 
     shutil.rmtree(path)
-    return size, commits, has_readme
+    return size, commits, has_readme, has_installed_apps_ref
+
+
+def _check_readme(path):
+    import os
+
+    installed_apps_reg = re.compile(r'.*(INSTALLED)\_(APPS).*', re.IGNORECASE)
+    readme_reg = re.compile(r'^(README)((\..+)|\Z)', re.IGNORECASE)
+    readme_files = [f for f in os.listdir(path) if re.match(readme_reg, f)]
+    has_readme = len(readme_files) > 0
+    has_installed_apps_ref = False
+
+    if has_readme:
+        for readme_file in readme_files:
+            fp = os.path.join(path, readme_file)
+            if not os.path.islink(fp):
+                with open(fp) as f:
+                    for line in f:
+                        if re.match(installed_apps_reg, line):
+                            has_installed_apps_ref = True
+                            break
+
+    return has_readme, has_installed_apps_ref
 
 
 def _get_total_commits(repo):

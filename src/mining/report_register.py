@@ -37,7 +37,7 @@ class ReportRegister():
         'dp_slug', 'dp_category', 'dp_grids', 'dp_usage_count', 'has_valid_repo_url', 
         'dp_repo_url', 'has_valid_repo', 'platform', 'repo_id', 'repo_stars', 
         'repo_last_modified', 'repo_forks', 'repo_open_issues', 'repo_topics',
-        'repo_size', 'repo_commits', 'repo_has_readme'
+        'repo_size', 'repo_commits', 'repo_has_readme', 'repo_has_installed_app_ref'
     ]
 
     @staticmethod
@@ -45,7 +45,7 @@ class ReportRegister():
         return (
             'dp_slug;dp_category;dp_grids;dp_usage_count;has_valid_repo_url;dp_repo_url;has_valid_repo;'
             'platform;repo_id;repo_stars;repo_last_modified;repo_forks;repo_open_issues;repo_topics;'
-            'repo_size;repo_commits;repo_has_readme'
+            'repo_size;repo_commits;repo_has_readme;repo_has_installed_app_ref'
         )
 
 
@@ -58,6 +58,7 @@ class ReportRegister():
         self.repo_url = package['repo_url'] if self.has_valid_repo_url else ''
         self.has_valid_repo = False
         self.repo_has_readme = False
+        self.repo_has_installed_app_ref = False
         self.repo_id = None
 
 
@@ -79,6 +80,7 @@ class ReportRegister():
                 self.repo_size = repo_info['repo_size']
                 self.repo_commits = repo_info['repo_commits']
                 self.repo_has_readme = repo_info['repo_has_readme']
+                self.repo_has_installed_app_ref = repo_info['repo_has_installed_app_ref']
             
 
     def get_line(self):
@@ -106,7 +108,7 @@ class ReportRegister():
           
             return '{};{}'.format(line, False)
 
-        return '{};{};{};{};{};{};{};{};{};{}'.format(
+        return '{};{};{};{};{};{};{};{};{};{};{}'.format(
             line, 
             self.repo_id, 
             self.repo_stars,     
@@ -116,7 +118,8 @@ class ReportRegister():
             self.repo_topics,
             self.repo_size,
             self.repo_commits,
-            self.repo_has_readme
+            self.repo_has_readme,
+            self.repo_has_installed_app_ref
         )
 
 

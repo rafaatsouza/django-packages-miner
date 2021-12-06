@@ -25,7 +25,7 @@ def get_finished_slugs_and_packages(output_file):
     df = pd.read_csv(output_file, sep=';')
     
     slugs = list(df['dp_slug'].values)
-    packages = list(df[df['repo_id'].str.len() > 0]['repo_id'].values)
+    packages = list(df[df['repo_id'].astype(str).str.len() > 0]['repo_id'].values)
 
     return slugs, packages
 

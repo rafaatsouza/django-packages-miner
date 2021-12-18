@@ -60,6 +60,13 @@ class ReportRegister():
         self.repo_has_readme = False
         self.repo_has_installed_app_ref = False
         self.repo_id = None
+        self.repo_stars = None
+        self.repo_last_modified = None
+        self.repo_forks = None
+        self.repo_open_issues = None
+        self.repo_topics = None
+        self.repo_size = None
+        self.repo_commits = None
 
 
         if self.has_valid_repo_url:
@@ -84,7 +91,7 @@ class ReportRegister():
             
 
     def get_line(self):
-        line = '{};{};{};{};{};{};{}'.format(
+        line = '"{}";"{}";"{}";{};"{}";"{}";"{}"'.format(
             self.slug, 
             self.category, 
             self.grids, 
@@ -95,29 +102,20 @@ class ReportRegister():
         )
 
         if not self.has_valid_repo_url:
-            for _ in range(len(self._COLUMNS) - 7):
-                line = '{};{}'.format(line, '')
-            
-            return line
+            return '{};"";"";;;;;"";;;"False";"False"'.format(line)
 
-        line = '{};{}'.format(line, self.platform)
+        line = '{};"{}"'.format(line, self.platform)
 
-        if not self.has_valid_repo:
-            for _ in range(len(self._COLUMNS) - 9):
-                line = '{};{}'.format(line, '')
-          
-            return '{};{}'.format(line, False)
-
-        return '{};{};{};{};{};{};{};{};{};{};{}'.format(
+        return '{};{};{};{};{};{};{};{};{};"{}";"{}"'.format(
             line, 
-            self.repo_id, 
-            self.repo_stars,     
-            self.repo_last_modified, 
-            self.repo_forks, 
-            self.repo_open_issues, 
-            self.repo_topics,
-            self.repo_size,
-            self.repo_commits,
+            '"{}"'.format(self.repo_id) if self.repo_id is not None else '', 
+            self.repo_stars if self.repo_stars is not None else '',
+            '"{}"'.format(self.repo_last_modified) if self.repo_last_modified is not None else '', 
+            self.repo_forks if self.repo_forks is not None else '', 
+            '"{}"'.format(self.repo_open_issues) if self.repo_open_issues is not None else '', 
+            self.repo_topics or '',
+            self.repo_size if self.repo_size is not None else '',
+            self.repo_commits if self.repo_commits is not None else '',
             self.repo_has_readme,
             self.repo_has_installed_app_ref
         )

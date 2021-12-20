@@ -66,6 +66,9 @@ if __name__ == '__main__':
                             f.write(register.get_line() + '\n')
                         if register.repo_id:
                             finished_packages.append(register.repo_id)
+                        print('{} done'.format(package['slug']))
+                    else:
+                        print('{} without ID or already in file'.format(package['slug']))
                     finished_slugs.append(package['slug'])
                 except BaseException as error:
                     logger.exception('Unknown error at package {}'.format(package['slug']))

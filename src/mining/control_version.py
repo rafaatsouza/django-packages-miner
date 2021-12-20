@@ -1,4 +1,4 @@
-import re
+import os, re
 
 from datetime import datetime
 from enum import Enum
@@ -107,7 +107,7 @@ def _get_github_repo_info(repo_url, token, temp_path):
     )
 
     return {
-        'repo_id': org_repo_name, 
+        'repo_id': repo.full_name, 
         'repo_stars': repo.stargazers_count or 0, 
         'repo_last_modified': (
             '{}:000'.format(datetime.strftime(last_modified, '%Y-%m-%dT%H:%M:%S'))
@@ -184,25 +184,37 @@ def _get_repo_folder_info(repo_url, temp_path):
 
 
 def _check_readme(path):
-    import os
-
     installed_apps_reg = re.compile(r'.*(INSTALLED)\_(APPS).*', re.IGNORECASE)
     readme_reg = re.compile(r'^(README)((\..+)|\Z)', re.IGNORECASE)
     readme_files = [f for f in os.listdir(path) if re.match(readme_reg, f)]
     has_readme = len(readme_files) > 0
-    has_installed_apps_ref = False
-
+    
     if has_readme:
         for readme_file in readme_files:
             fp = os.path.join(path, readme_file)
-            if not os.path.islink(fp):
-                with open(fp) as f:
-                    for line in f:
-                        if re.match(installed_apps_reg, line):
-                            has_installed_apps_ref = True
-                            break
+            if __check_regex_in_file(installed_apps_reg, fp):
+                return has_readme, True
 
-    return has_readme, has_installed_apps_ref
+    for folder in ['doc', 'docs']:
+        doc_path = os.path.join(path, folder)
+        if os.path.exists(doc_path): 
+            doc_files = [f for f in os.listdir(doc_path) if f.endswith('.rst') or f.endswith('.md')]
+            for doc_file in doc_files:
+                fp = os.path.join(doc_path, doc_file)
+                if __check_regex_in_file(installed_apps_reg, fp):
+                    return has_readme, True
+
+    return has_readme, False
+
+
+def __check_regex_in_file(reg, file):
+    if not os.path.islink(file):
+        with open(file) as f:
+            for line in f:
+                if re.match(reg, line):
+                    return True
+    
+    return False
 
 
 def _get_total_commits(repo):
@@ -218,7 +230,6 @@ def _get_total_commits(repo):
 
 
 def _get_folder_size(folder_path):
-    import os
     size = 0
     for path, _, files in os.walk(folder_path):
         if not os.path.islink(path):

@@ -44,8 +44,8 @@ class ReportRegister():
     def get_header_line():
         return (
             'dp_slug;dp_category;dp_grids;dp_usage_count;has_valid_repo_url;dp_repo_url;has_valid_repo;'
-            'platform;repo_id;repo_stars;repo_last_modified;repo_forks;repo_open_issues;repo_topics;'
-            'repo_size;repo_commits;repo_has_readme;repo_has_installed_app_ref'
+            'platform;repo_id;repo_stars;repo_last_modified;repo_last_commit_date;repo_forks;repo_open_issues;'
+            'repo_topics;repo_size;repo_commits;repo_has_readme;repo_has_installed_app_ref'
         )
 
 
@@ -62,6 +62,7 @@ class ReportRegister():
         self.repo_id = None
         self.repo_stars = None
         self.repo_last_modified = None
+        self.repo_last_commit_date = None
         self.repo_forks = None
         self.repo_open_issues = None
         self.repo_topics = None
@@ -81,6 +82,7 @@ class ReportRegister():
                 self.repo_id = repo_info['repo_id']
                 self.repo_stars = repo_info['repo_stars']
                 self.repo_last_modified = repo_info['repo_last_modified']
+                self.repo_last_commit_date = repo_info['repo_last_commit_date']
                 self.repo_forks = repo_info['repo_forks']
                 self.repo_open_issues = repo_info['repo_open_issues']
                 self.repo_topics = repo_info['repo_topics']                
@@ -102,15 +104,16 @@ class ReportRegister():
         )
 
         if not self.has_valid_repo_url:
-            return '{};"";"";;;;;"";;;"False";"False"'.format(line)
+            return '{};"";"";;;;;;"";;;"False";"False"'.format(line)
 
         line = '{};"{}"'.format(line, self.platform)
 
-        return '{};{};{};{};{};{};{};{};{};"{}";"{}"'.format(
+        return '{};{};{};{};{};{};{};{};{};{};"{}";"{}"'.format(
             line, 
             '"{}"'.format(self.repo_id) if self.repo_id is not None else '', 
             self.repo_stars if self.repo_stars is not None else '',
             '"{}"'.format(self.repo_last_modified) if self.repo_last_modified is not None else '', 
+            '"{}"'.format(self.repo_last_commit_date) if self.repo_last_commit_date is not None else '', 
             self.repo_forks if self.repo_forks is not None else '', 
             '"{}"'.format(self.repo_open_issues) if self.repo_open_issues is not None else '', 
             self.repo_topics or '',

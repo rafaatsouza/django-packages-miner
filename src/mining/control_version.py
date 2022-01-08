@@ -102,7 +102,7 @@ def _get_github_repo_info(repo_url, token, temp_path):
         else:
             topics = '{},{}'.format(topics, topic)
 
-    repo_size, repo_commits, repo_has_readme, repo_has_installed_app_ref = (
+    repo_size, repo_commits, last_commit_date, repo_has_readme, repo_has_installed_app_ref = (
         _get_repo_folder_info('{}{}'.format(Platform.GITHUB.address, org_repo_name), temp_path)
     )
 
@@ -112,6 +112,9 @@ def _get_github_repo_info(repo_url, token, temp_path):
         'repo_last_modified': (
             '{}:000'.format(datetime.strftime(last_modified, '%Y-%m-%dT%H:%M:%S'))
         ), 
+        'repo_last_commit_date': (
+            '{}:000'.format(datetime.strftime(last_commit_date, '%Y-%m-%dT%H:%M:%S')) if last_commit_date else None
+        ),
         'repo_forks': repo.forks_count, 
         'repo_open_issues': repo.open_issues_count, 
         'repo_topics': topics,
@@ -149,7 +152,7 @@ def _get_gitlab_repo_info(repo_url, token, temp_path):
         else:
             topics = '{},{}'.format(topics, topic)
 
-    repo_size, repo_commits, repo_has_readme, repo_has_installed_app_ref = (
+    repo_size, repo_commits, last_commit_date, repo_has_readme, repo_has_installed_app_ref = (
         _get_repo_folder_info('{}{}'.format(Platform.GITLAB.address, org_repo_name), temp_path)
     )
 
@@ -157,6 +160,9 @@ def _get_gitlab_repo_info(repo_url, token, temp_path):
         'repo_id': org_repo_name, 
         'repo_stars': repo.star_count,
         'repo_last_modified': '{}:000'.format(last_modified), 
+        'repo_last_commit_date': (
+            '{}:000'.format(datetime.strftime(last_commit_date, '%Y-%m-%dT%H:%M:%S')) if last_commit_date else None
+        ),
         'repo_forks': repo.forks_count, 
         'repo_open_issues': repo.open_issues_count, 
         'repo_topics': topics,
@@ -176,11 +182,11 @@ def _get_repo_folder_info(repo_url, temp_path):
     Repo.clone_from(repo_url, path)
 
     size = _get_folder_size(path)
-    commits = _get_total_commits(Repo(path))
+    total_commits, last_commit_date = _get_total_and_last_date_commits(Repo(path))
     has_readme, has_installed_apps_ref = _check_readme(path)
 
     shutil.rmtree(path)
-    return size, commits, has_readme, has_installed_apps_ref
+    return size, total_commits, last_commit_date, has_readme, has_installed_apps_ref
 
 
 def _check_readme(path):
@@ -217,16 +223,19 @@ def __check_regex_in_file(reg, file):
     return False
 
 
-def _get_total_commits(repo):
-		all_commits = repo.iter_commits()
-		commits = 0
-		while True:
-			try:
-				_ = next(all_commits)
-				commits = commits + 1
-			except StopIteration:
-				break
-		return commits
+def _get_total_and_last_date_commits(repo):
+    last_date = None
+    all_commits = repo.iter_commits()
+    commits = 0
+    while True:
+        try:
+            current = next(all_commits)
+            commits = commits + 1
+            if current.authored_datetime and (not last_date or last_date < current.authored_datetime):
+                last_date = current.authored_datetime            
+        except StopIteration:
+            break
+    return commits, last_date
 
 
 def _get_folder_size(folder_path):

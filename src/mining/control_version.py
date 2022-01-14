@@ -108,6 +108,7 @@ def _get_github_repo_info(repo_url, token, temp_path):
 
     return {
         'repo_id': repo.full_name, 
+        'repo_url': repo.html_url,
         'repo_stars': repo.stargazers_count or 0, 
         'repo_last_modified': (
             '{}:000'.format(datetime.strftime(last_modified, '%Y-%m-%dT%H:%M:%S'))
@@ -158,6 +159,7 @@ def _get_gitlab_repo_info(repo_url, token, temp_path):
 
     return {
         'repo_id': org_repo_name, 
+        'repo_url': repo.web_url,
         'repo_stars': repo.star_count,
         'repo_last_modified': '{}:000'.format(last_modified), 
         'repo_last_commit_date': (

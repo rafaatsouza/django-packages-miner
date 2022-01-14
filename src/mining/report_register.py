@@ -80,6 +80,8 @@ class ReportRegister():
             if repo_info:
                 self.has_valid_repo = True
                 self.repo_id = repo_info['repo_id']
+                if 'repo_url' in repo_info and repo_info['repo_url']:
+                    self.repo_url = repo_info['repo_url']
                 self.repo_stars = repo_info['repo_stars']
                 self.repo_last_modified = repo_info['repo_last_modified']
                 self.repo_last_commit_date = repo_info['repo_last_commit_date']

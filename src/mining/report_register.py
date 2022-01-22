@@ -45,7 +45,7 @@ class ReportRegister():
         return (
             'dp_slug;dp_category;dp_grids;dp_usage_count;has_valid_repo_url;dp_repo_url;has_valid_repo;'
             'platform;repo_id;repo_stars;repo_last_modified;repo_last_commit_date;repo_forks;repo_open_issues;'
-            'repo_topics;repo_size;repo_commits;repo_has_readme;repo_has_installed_app_ref'
+            'repo_topics;repo_size;repo_commits;repo_has_readme;repo_has_installed_app_ref;has_used_by_count;used_by_count'
         )
 
 
@@ -68,6 +68,8 @@ class ReportRegister():
         self.repo_topics = None
         self.repo_size = None
         self.repo_commits = None
+        self.has_used_by_count = False
+        self.used_by_count = None
 
 
         if self.has_valid_repo_url:
@@ -92,6 +94,10 @@ class ReportRegister():
                 self.repo_commits = repo_info['repo_commits']
                 self.repo_has_readme = repo_info['repo_has_readme']
                 self.repo_has_installed_app_ref = repo_info['repo_has_installed_app_ref']
+                
+                if 'has_used_by_count' in repo_info and repo_info['has_used_by_count']:
+                    self.has_used_by_count = repo_info['has_used_by_count']
+                    self.used_by_count = repo_info['used_by_count']
             
 
     def get_line(self):
@@ -106,12 +112,11 @@ class ReportRegister():
         )
 
         if not self.has_valid_repo_url:
-            return '{};"";"";;;;;;"";;;"False";"False"'.format(line)
+            return '{};"";"";;;;;;"";;;"False";"False";"False";'.format(line)
 
-        line = '{};"{}"'.format(line, self.platform)
-
-        return '{};{};{};{};{};{};{};{};{};{};"{}";"{}"'.format(
+        return '{};"{}";{};{};{};{};{};{};{};{};{};"{}";"{}";"{}";{}'.format(
             line, 
+            self.platform,
             '"{}"'.format(self.repo_id) if self.repo_id is not None else '', 
             self.repo_stars if self.repo_stars is not None else '',
             '"{}"'.format(self.repo_last_modified) if self.repo_last_modified is not None else '', 
@@ -122,7 +127,9 @@ class ReportRegister():
             self.repo_size if self.repo_size is not None else '',
             self.repo_commits if self.repo_commits is not None else '',
             self.repo_has_readme,
-            self.repo_has_installed_app_ref
+            self.repo_has_installed_app_ref,
+            self.has_used_by_count,
+            self.used_by_count if self.used_by_count is not None else '',
         )
 
 

@@ -106,6 +106,8 @@ def _get_github_repo_info(repo_url, token, temp_path):
         _get_repo_folder_info('{}{}'.format(Platform.GITHUB.address, org_repo_name), temp_path)
     )
 
+    used_by_count = _get_github_used_by(repo.full_name, repo.html_url)
+
     return {
         'repo_id': repo.full_name, 
         'repo_url': repo.html_url,
@@ -123,6 +125,8 @@ def _get_github_repo_info(repo_url, token, temp_path):
         'repo_commits': repo_commits,
         'repo_has_readme': repo_has_readme,
         'repo_has_installed_app_ref': repo_has_installed_app_ref,
+        'has_used_by_count': used_by_count is not None,
+        'used_by_count': used_by_count,
     }
 
 
@@ -249,3 +253,23 @@ def _get_folder_size(folder_path):
                 if not os.path.islink(fp):
                     size += os.path.getsize(fp)
     return size
+
+
+def _get_github_used_by(repo_id, repo_url):
+    import requests
+    from bs4 import BeautifulSoup
+
+    html_text = requests.get(repo_url).text
+    soup = BeautifulSoup(html_text, 'html.parser')
+    counters = soup.findAll('span', class_='Counter')
+
+    if counters and len(counters) > 0:
+        for i in range(len(counters)):
+            title = counters[i].get('title')
+            if title and counters[i].parent:
+                title = title.replace(',','').strip()
+                href = counters[i].parent.get('href')
+                correct_href = href and '{}/network/dependents'.format(repo_id) in href
+
+                if title and title.isnumeric() and correct_href:
+                    return int(title)

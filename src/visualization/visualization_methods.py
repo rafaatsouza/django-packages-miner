@@ -62,3 +62,20 @@ class VisualizationMethods:
         plt.grid()
         plt.tight_layout()
         plt.show()
+
+
+    @staticmethod
+    def show_bar_chart_by_dict_and_ax(ax, dict, xlabel, ylabel, title, color=None):
+        keys = list(dict.keys())
+        values = list(dict.values())
+        
+        if color:
+            ax.bar(keys, values, color=color, width=0.4)
+        else:
+            ax.bar(keys, values, width=0.4)
+        
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+        ax.set_xticklabels(keys, rotation=45, ha='right')
+        ax.set_title(title)
+        ax.grid()

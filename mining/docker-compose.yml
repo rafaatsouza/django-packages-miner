@@ -9,4 +9,4 @@ services:
       - "GITHUB_TOKEN=${GITHUB_TOKEN}"
       - "GITLAB_TOKEN=${GITLAB_TOKEN}"
     volumes:
-      - ../../data:/data
+      - ../data:/data

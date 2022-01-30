@@ -31,7 +31,7 @@ def get_finished_slugs_and_packages(output_file):
 
 
 if __name__ == '__main__':
-    data_path = '../../data/'
+    data_path = '../data/'
     logger = get_logger('{}{}'.format(data_path, os.environ.get('LOG_FILE_NAME') or 'file.log'))
     
     tokens = {

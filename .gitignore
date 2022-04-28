@@ -1,6 +1,9 @@
 # Output files
 data/data.csv
 
+# Poetry files
+poetry.lock
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

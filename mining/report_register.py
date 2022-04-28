@@ -33,19 +33,13 @@ def _check_valid_repo_url(repo_url):
 
 
 class ReportRegister():
-    _COLUMNS = [
-        'dp_slug', 'dp_category', 'dp_grids', 'dp_usage_count', 'has_valid_repo_url', 
-        'dp_repo_url', 'has_valid_repo', 'platform', 'repo_id', 'repo_stars', 
-        'repo_last_modified', 'repo_forks', 'repo_open_issues', 'repo_topics',
-        'repo_size', 'repo_commits', 'repo_has_readme', 'repo_has_installed_app_ref'
-    ]
-
     @staticmethod
     def get_header_line():
         return (
-            'dp_slug;dp_category;dp_grids;dp_usage_count;has_valid_repo_url;dp_repo_url;has_valid_repo;'
-            'platform;repo_id;repo_stars;repo_last_modified;repo_last_commit_date;repo_forks;repo_open_issues;'
-            'repo_topics;repo_size;repo_commits;repo_has_readme;repo_has_installed_app_ref;has_used_by_count;used_by_count'
+            'dp_slug;dp_category;dp_grids;dp_usage_count;has_valid_repo_url;dp_repo_url;'
+            'has_valid_repo;platform;repo_id;repo_stars;repo_last_modified;repo_last_commit_date;'
+            'repo_forks;repo_open_issues;repo_topics;repo_size;repo_commits;repo_has_readme;'
+            'repo_has_installed_app_ref;has_used_by_count;used_by_count;repo_maybe_deprecated'
         )
 
 
@@ -70,6 +64,7 @@ class ReportRegister():
         self.repo_commits = None
         self.has_used_by_count = False
         self.used_by_count = None
+        self.repo_maybe_deprecated = False
 
 
         if self.has_valid_repo_url:
@@ -94,11 +89,10 @@ class ReportRegister():
                 self.repo_commits = repo_info['repo_commits']
                 self.repo_has_readme = repo_info['repo_has_readme']
                 self.repo_has_installed_app_ref = repo_info['repo_has_installed_app_ref']
-                
-                if 'has_used_by_count' in repo_info and repo_info['has_used_by_count']:
-                    self.has_used_by_count = repo_info['has_used_by_count']
-                    self.used_by_count = repo_info['used_by_count']
-            
+                self.has_used_by_count = repo_info.get('has_used_by_count', False)
+                self.used_by_count = repo_info.get('used_by_count')
+                self.repo_maybe_deprecated = repo_info['repo_maybe_deprecated']
+                            
 
     def get_line(self):
         line = '"{}";"{}";"{}";{};"{}";"{}";"{}"'.format(
@@ -112,9 +106,9 @@ class ReportRegister():
         )
 
         if not self.has_valid_repo_url:
-            return '{};"";"";;;;;;"";;;"False";"False";"False";'.format(line)
+            return '{};"";"";;;;;;"";;;"False";"False";"False";;"False"'.format(line)
 
-        return '{};"{}";{};{};{};{};{};{};{};{};{};"{}";"{}";"{}";{}'.format(
+        return '{};"{}";{};{};{};{};{};{};{};{};{};"{}";"{}";"{}";{};"{}"'.format(
             line, 
             self.platform,
             '"{}"'.format(self.repo_id) if self.repo_id is not None else '', 
@@ -130,6 +124,7 @@ class ReportRegister():
             self.repo_has_installed_app_ref,
             self.has_used_by_count,
             self.used_by_count if self.used_by_count is not None else '',
+            self.repo_maybe_deprecated,
         )
 
 

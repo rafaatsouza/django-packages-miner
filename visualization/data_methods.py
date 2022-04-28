@@ -3,7 +3,7 @@ def get_full_dataframe():
     return pd.read_csv('../data/django-packages.csv', sep=';')
 
 
-def get_valid_dataframe():
+def get_defined_dataframe():
     import re
 
     df = get_full_dataframe()
@@ -35,3 +35,40 @@ def get_valid_dataframe():
     df = df[df['repo_stars'] >= starts_median]
     
     return df
+
+
+def get_valid_dataframe():
+    df = get_defined_dataframe()    
+
+    false_positive_deprecated_packages = [
+        'django/channels',
+        'rq/django-rq',
+        'RealmTeam/django-rest-framework-social-oauth2',
+        'philipn/django-rest-framework-filters',
+        'shacker/django-todo',
+        'django/django-localflavor',
+        'timmyomahony/django-pagedown',
+        'chartit/django-chartit',
+        'tbicr/django-pg-zero-downtime-migrations',
+        'jmrivas86/django-json-widget',
+        'bartTC/django-memcache-status',
+        'dmgctrl/django-ztask',
+        'Tivix/django-common',
+        'GoodCloud/django-zebra',
+        'shymonk/django-datatable',
+        'jazzband/django-fsm-log',
+        'ctxis/django-admin-view-permission',
+        'peterbe/django-fancy-cache',
+        'django-oscar/django-oscar-paypal',
+        'salad/salad',
+        'wagnerdelima/drf-social-oauth2',
+        'tolomea/django-data-browser',
+        'jedie/django-tools',
+        'pinax/pinax-eventlog',
+        'pinax/pinax-invitations',
+        'JamesRitchie/django-rest-framework-expiring-tokens'
+    ]
+
+    return (
+        df[(~df['repo_maybe_deprecated']) | (df['repo_id'].isin(false_positive_deprecated_packages))]
+    )

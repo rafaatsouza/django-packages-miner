@@ -95,15 +95,12 @@ def _get_github_repo_info(repo_url, token, temp_path):
     
     last_modified = datetime.strptime(repo.last_modified, '%a, %d %b %Y %H:%M:%S %Z')
 
-    topics = ''
-    for topic in repo.get_topics():
-        if topics == '':
-            topics = topic
-        else:
-            topics = '{},{}'.format(topics, topic)
-
-    repo_size, repo_commits, last_commit_date, repo_has_readme, repo_has_installed_app_ref = (
-        _get_repo_folder_info('{}{}'.format(Platform.GITHUB.address, org_repo_name), temp_path)
+    repo_size, repo_commits, last_commit_date, repo_has_readme, repo_has_installed_app_ref, maybe_deprecated = (
+        _get_repo_folder_info(
+            '{}{}'.format(Platform.GITHUB.address, org_repo_name), 
+            temp_path, 
+            archived_repo=repo.archived
+        )
     )
 
     used_by_count = _get_github_used_by(repo.full_name, repo.html_url)
@@ -120,13 +117,14 @@ def _get_github_repo_info(repo_url, token, temp_path):
         ),
         'repo_forks': repo.forks_count, 
         'repo_open_issues': repo.open_issues_count, 
-        'repo_topics': topics,
+        'repo_topics': ', '.join(sorted(repo.get_topics() or '')),
         'repo_size': repo_size,
         'repo_commits': repo_commits,
         'repo_has_readme': repo_has_readme,
         'repo_has_installed_app_ref': repo_has_installed_app_ref,
         'has_used_by_count': used_by_count is not None,
         'used_by_count': used_by_count,
+        'repo_maybe_deprecated': maybe_deprecated,
     }
 
 
@@ -150,14 +148,7 @@ def _get_gitlab_repo_info(repo_url, token, temp_path):
 
     last_modified = repo.last_activity_at[:(repo.last_activity_at.rfind('.'))]
 
-    topics = ''
-    for topic in repo.topics:
-        if topics == '':
-            topics = topic
-        else:
-            topics = '{},{}'.format(topics, topic)
-
-    repo_size, repo_commits, last_commit_date, repo_has_readme, repo_has_installed_app_ref = (
+    repo_size, repo_commits, last_commit_date, repo_has_readme, repo_has_installed_app_ref, maybe_deprecated = (
         _get_repo_folder_info('{}{}'.format(Platform.GITLAB.address, org_repo_name), temp_path)
     )
 
@@ -171,15 +162,16 @@ def _get_gitlab_repo_info(repo_url, token, temp_path):
         ),
         'repo_forks': repo.forks_count, 
         'repo_open_issues': repo.open_issues_count, 
-        'repo_topics': topics,
+        'repo_topics': ', '.join(sorted(repo.topics or '')),
         'repo_size': repo_size,
         'repo_commits': repo_commits,
         'repo_has_readme': repo_has_readme,
         'repo_has_installed_app_ref': repo_has_installed_app_ref,
+        'repo_maybe_deprecated': maybe_deprecated,
     }
 
 
-def _get_repo_folder_info(repo_url, temp_path):
+def _get_repo_folder_info(repo_url, temp_path, archived_repo=False):
     import uuid, shutil
     from git import Repo
 
@@ -189,34 +181,43 @@ def _get_repo_folder_info(repo_url, temp_path):
 
     size = _get_folder_size(path)
     total_commits, last_commit_date = _get_total_and_last_date_commits(Repo(path))
-    has_readme, has_installed_apps_ref = _check_readme(path)
+    has_readme, has_installed_apps_ref, maybe_deprecated = _check_readme(path, archived_repo)
 
     shutil.rmtree(path)
-    return size, total_commits, last_commit_date, has_readme, has_installed_apps_ref
+    return size, total_commits, last_commit_date, has_readme, has_installed_apps_ref, maybe_deprecated
 
 
-def _check_readme(path):
+def _check_readme(path, archived_repo=False):
     installed_apps_reg = re.compile(r'.*(INSTALLED)\_(APPS).*', re.IGNORECASE)
+    maybe_deprecated_reg = re.compile(r'.*(DEPRECATED).*', re.IGNORECASE)
     readme_reg = re.compile(r'^(README)((\..+)|\Z)', re.IGNORECASE)
     readme_files = [f for f in os.listdir(path) if re.match(readme_reg, f)]
+
     has_readme = len(readme_files) > 0
+    has_installed_apps_ref = False
+    maybe_deprecated = archived_repo
     
     if has_readme:
         for readme_file in readme_files:
             fp = os.path.join(path, readme_file)
-            if __check_regex_in_file(installed_apps_reg, fp):
-                return has_readme, True
+            if has_installed_apps_ref == False and __check_regex_in_file(installed_apps_reg, fp):
+                has_installed_apps_ref = True
+            if maybe_deprecated == False and __check_regex_in_file(maybe_deprecated_reg, fp):
+                maybe_deprecated = True
+            if has_installed_apps_ref and maybe_deprecated:
+                break
 
-    for folder in ['doc', 'docs']:
-        doc_path = os.path.join(path, folder)
-        if os.path.exists(doc_path): 
-            doc_files = [f for f in os.listdir(doc_path) if f.endswith('.rst') or f.endswith('.md')]
-            for doc_file in doc_files:
-                fp = os.path.join(doc_path, doc_file)
-                if __check_regex_in_file(installed_apps_reg, fp):
-                    return has_readme, True
+    if not has_installed_apps_ref:
+        for folder in ['doc', 'docs']:
+            doc_path = os.path.join(path, folder)
+            if os.path.exists(doc_path): 
+                doc_files = [f for f in os.listdir(doc_path) if f.endswith('.rst') or f.endswith('.md')]
+                for doc_file in doc_files:
+                    fp = os.path.join(doc_path, doc_file)
+                    if __check_regex_in_file(installed_apps_reg, fp):
+                        return has_readme, True, maybe_deprecated
 
-    return has_readme, False
+    return has_readme, has_installed_apps_ref, maybe_deprecated
 
 
 def __check_regex_in_file(reg, file):

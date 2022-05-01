@@ -22,13 +22,21 @@ def get_defined_dataframe():
     df = df[~df['dp_grids'].str.match(cms_reg, na=False)]
     df = df[~df['repo_topics'].str.match(cms_reg, na=False)]
 
-    # removed_packages = [
-    #     'wooey/Wooey', # Django app that creates automatic web UIs for Python scripts
-    #     'django/django', # Django framework
-    #     'gunthercox/ChatterBot', # ML conversational dialog engine for creating chatbots
-    #     'mirumee/saleor', # ecommerce platform built on Django
-    # ]
-    # df = df[~df['repo_id'].isin(removed_packages)]
+    removed_packages = [
+        'wooey/Wooey', # Django app that creates automatic web UIs for Python scripts
+        'django/django', # Django framework
+        'gunthercox/ChatterBot', # ML conversational dialog engine for creating chatbots
+        'mirumee/saleor', # ecommerce platform built on Django
+        'pinax/pinax',
+        'strawberry-graphql/strawberry',
+        'shuup/shuup',
+        'hagsteel/swampdragon',
+        'ellmetha/django-machina',
+        'amitu/importd',
+        'maxpoletaev/django-micro',
+        'slyapustin/django-classified',
+    ]
+    df = df[~df['repo_id'].isin(removed_packages)]
     
     starts_median = 100 # np.median(np.array(df['repo_stars'].values))
     

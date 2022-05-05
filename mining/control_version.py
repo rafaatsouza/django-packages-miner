@@ -189,7 +189,7 @@ def _get_repo_folder_info(repo_url, temp_path, archived_repo=False):
 
 def _check_readme(path, archived_repo=False):
     installed_apps_reg = re.compile(r'.*(INSTALLED)\_(APPS).*', re.IGNORECASE)
-    maybe_deprecated_reg = re.compile(r'.*(DEPRECATED).*', re.IGNORECASE)
+    maybe_deprecated_reg = re.compile(r'.*(DEPRECATED|UNMAINTAINED).*', re.IGNORECASE)
     readme_reg = re.compile(r'^(README)((\..+)|\Z)', re.IGNORECASE)
     readme_files = [f for f in os.listdir(path) if re.match(readme_reg, f)]
 

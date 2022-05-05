@@ -50,6 +50,7 @@ def get_valid_dataframe():
 
     false_positive_deprecated_packages = [
         'django/channels',
+        'adamchainz/django-cors-headers',
         'rq/django-rq',
         'RealmTeam/django-rest-framework-social-oauth2',
         'philipn/django-rest-framework-filters',
@@ -66,6 +67,7 @@ def get_valid_dataframe():
         'shymonk/django-datatable',
         'jazzband/django-fsm-log',
         'ctxis/django-admin-view-permission',
+        'MarkusH/django-dynamic-forms',
         'peterbe/django-fancy-cache',
         'django-oscar/django-oscar-paypal',
         'salad/salad',

@@ -8,5 +8,6 @@ services:
     environment: 
       - "GITHUB_TOKEN=${GITHUB_TOKEN}"
       - "GITLAB_TOKEN=${GITLAB_TOKEN}"
+      - "DATAFRAME_FILE=${DATAFRAME_FILE}"
     volumes:
       - ../data:/data

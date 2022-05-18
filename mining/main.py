@@ -50,7 +50,8 @@ if __name__ == '__main__':
         finished_slugs, finished_packages = get_finished_slugs_and_packages(output_file)
 
     django_packages_provider = DjangoPackagesProviderFactory.build(
-        '{}{}'.format(data_path, os.environ.get('DATAFRAME_FILE'))
+        '{}{}'.format(data_path, os.environ['DATAFRAME_FILE'])
+        if os.environ.get('DATAFRAME_FILE') else None
     )
     failed_slugs = []
     packages_remaining = True

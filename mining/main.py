@@ -1,6 +1,6 @@
 import os
 
-from django_packages import DjangoPackagesApi
+from django_packages_provider_factory import DjangoPackagesProviderFactory
 from report_register import ReportRegister
 
 
@@ -49,14 +49,17 @@ if __name__ == '__main__':
     else:
         finished_slugs, finished_packages = get_finished_slugs_and_packages(output_file)
 
-    django_packages_api = DjangoPackagesApi()
+    django_packages_provider = DjangoPackagesProviderFactory.build(
+        '{}{}'.format(data_path, os.environ['DATAFRAME_FILE'])
+        if os.environ.get('DATAFRAME_FILE') else None
+    )
     failed_slugs = []
     packages_remaining = True
     next = None
 
     while packages_remaining:
-        packages, next = django_packages_api.get_packages(next)
-        packages_remaining = len(next) > 0
+        packages, next = django_packages_provider.get_packages(next)
+        packages_remaining = next is not None
         for package in packages:
             if not (package['slug'] in finished_slugs):
                 try:
@@ -77,7 +80,7 @@ if __name__ == '__main__':
                 print('{} already in output file'.format(package['slug']))
 
     for package_id in failed_slugs:
-        package = django_packages_api.get_package(package_id)
+        package = django_packages_provider.get_package_by_id(package_id)
         try:
             register = ReportRegister(package, tokens, data_path)
             if not register.repo_id or register.repo_id not in finished_packages:

@@ -4,7 +4,7 @@ from django_packages import DjangoPackagesProvider
 
 class DjangoPackagesDataFrameProvider(DjangoPackagesProvider):
 
-    _OFFSET = 5
+    _OFFSET = 100
 
     def __init__(self, dataframe_file_path):
         self.dataframe = pd.read_csv(dataframe_file_path, sep=';')

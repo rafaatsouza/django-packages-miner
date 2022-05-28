@@ -23,6 +23,7 @@ class AggregationMethods:
             used_by_count = row[used_column] or 0
             values = (row[value_column] or '').split(',')
             for part in values:
+                part = part.strip()
                 if _is_unwanted(part, unwanteds, unwanteds_regex):
                     continue
 
@@ -52,6 +53,8 @@ class AggregationMethods:
         for grid in values:
             parts = grid.split(',')
             for part in parts:
+                part = part.strip()
+                
                 if _is_unwanted(part, unwanteds, unwanteds_regex):
                     continue
 

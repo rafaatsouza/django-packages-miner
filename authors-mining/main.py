@@ -12,15 +12,6 @@ def get_package_data(package_df_data: pd.Series):
     path = '{}{}/'.format('../data/', uuid.uuid4().hex)
 
     authors = {}
-    result = ''
-    base_line = '\n{};{};{};{};{}'.format(
-        package_df_data['platform'],
-        package_df_data['repo_id'],
-        package_df_data['dp_grids'] if not pd.isna(package_df_data['dp_grids']) else '',
-        package_df_data['repo_stars'],
-        package_df_data['repo_last_commit_date'],
-    )
-
     Repo.clone_from(package_df_data['dp_repo_url'], path)
     repo = Repo(path)
     all_commits = repo.iter_commits()
@@ -40,6 +31,16 @@ def get_package_data(package_df_data: pd.Series):
             break
 
     shutil.rmtree(path)
+
+    result = ''
+    base_line = '\n{};{};{};{};{};{}'.format(
+        package_df_data['platform'],
+        package_df_data['repo_id'],
+        package_df_data['dp_grids'] if not pd.isna(package_df_data['dp_grids']) else '',
+        package_df_data['repo_stars'],
+        len(authors.keys()),
+        package_df_data['repo_last_commit_date'],
+    )
     
     for key, value in authors.items():
         result = '{}{};{};{};{}'.format(result, base_line, key, value['name'], value['commits'])
@@ -55,7 +56,7 @@ if __name__ == '__main__':
     current = 0
 
     with open(output_file, 'a') as f:
-        f.write('platform;repo_id;grids;repo_stars;repo_last_commit_date;author_email;author_name;commits_count')
+        f.write('platform;repo_id;grids;repo_stars;repo_authors;repo_last_commit_date;author_email;author_name;commits_count')
 
     for row in df.iterrows():
         with open(output_file, 'a') as f:

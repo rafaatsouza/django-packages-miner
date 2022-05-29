@@ -100,7 +100,6 @@ def get_authors_dataframe():
 
 def get_authors_graph():
     import networkx as nx
-    from datetime import datetime
 
     def __get_common_authors(df):
         separator = '<>'
@@ -110,7 +109,8 @@ def get_authors_graph():
         authors = {}
         for row in g.iterrows():
             package = row[1]
-            repos = package['repo_id'].split(separator)
+            repos = [(pkg[(pkg.find('/')+1):]) for pkg in package['repo_id'].split(separator)]
+            repos = list(set(repos))
             if package['author_email'] in authors:
                 authors[package['author_email']] = authors[package['author_email']] + repos
             else:
@@ -122,17 +122,19 @@ def get_authors_graph():
     authors = __get_common_authors(df)
     g = nx.Graph()
 
-    repos = df[['repo_id', 'platform', 'grids', 'repo_stars', 'repo_last_commit_date']]
+    repos = df[['repo_id', 'grids', 'repo_authors', 'repo_stars']]
     repos.drop_duplicates()
 
     for row in repos.iterrows():
         package = row[1]
-        if package['repo_id'] not in g.nodes:
+        repo_id = package['repo_id']
+        name  = (repo_id[(repo_id.find('/')+1):])
+        if name not in g.nodes:
             g.add_nodes_from([
-                (package['repo_id'], {
-                    'platform': package['platform'], 
+                (name, {
+                    'full_id': repo_id,
                     'stars': int(package['repo_stars']),
-                    'last_commit_date': datetime.strptime(package['repo_last_commit_date'], '%Y-%m-%dT%H:%M:%S:%f'),
+                    'authors': int(package['repo_authors']),
                     'grids': package['grids'].split(',') if not pd.isna(package['grids']) else []
                 })])
 

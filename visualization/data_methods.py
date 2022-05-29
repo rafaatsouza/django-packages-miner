@@ -1,5 +1,6 @@
+import pandas as pd
+
 def get_full_dataframe():
-    import pandas as pd
     return pd.read_csv('../data/django-packages.csv', sep=';')
 
 
@@ -82,3 +83,68 @@ def get_valid_dataframe():
     return (
         df[(~df['repo_maybe_deprecated']) | (df['repo_id'].isin(false_positive_deprecated_packages))]
     )
+
+
+def get_authors_dataframe():
+    filepath = '../data/django-packages-authors.csv'
+    df = pd.read_csv(filepath, sep=';')
+    df = df[df['author_email'].str.contains('dependabot') == False]
+    df = df[df['author_email'].str.contains('noreply') == False]
+    df = df[df['author_email'].str.contains('no.reply') == False]
+    df = df[df['author_email'].str.contains('no-reply') == False]
+    df = df[df['author_email'].str.contains('no author') == False]
+    df = df[df['author_email'].str.contains('github') == False]
+    df = df[df['author_email'].str.contains('none') == False]
+    return df[df['commits_count'] > 1]
+
+
+def get_authors_graph():
+    import networkx as nx
+    from datetime import datetime
+
+    def __get_common_authors(df):
+        separator = '<>'
+        g = df.groupby(['author_email'], as_index = False).agg({'repo_id': separator.join})
+        g[g['repo_id'].str.contains(separator)]
+
+        authors = {}
+        for row in g.iterrows():
+            package = row[1]
+            repos = package['repo_id'].split(separator)
+            if package['author_email'] in authors:
+                authors[package['author_email']] = authors[package['author_email']] + repos
+            else:
+                authors[package['author_email']] = repos
+
+        return authors
+
+    df = get_authors_dataframe()
+    authors = __get_common_authors(df)
+    g = nx.Graph()
+
+    repos = df[['repo_id', 'platform', 'grids', 'repo_stars', 'repo_last_commit_date']]
+    repos.drop_duplicates()
+
+    for row in repos.iterrows():
+        package = row[1]
+        if package['repo_id'] not in g.nodes:
+            g.add_nodes_from([
+                (package['repo_id'], {
+                    'platform': package['platform'], 
+                    'stars': int(package['repo_stars']),
+                    'last_commit_date': datetime.strptime(package['repo_last_commit_date'], '%Y-%m-%dT%H:%M:%S:%f'),
+                    'grids': package['grids'].split(',') if not pd.isna(package['grids']) else []
+                })])
+
+    for _, repos in authors.items():
+        if len(repos) >= 2:
+            for i in range(len(repos)):
+                for j in range(i + 1, len(repos)):
+                    exists = (
+                        (repos[i], repos[j]) in g.edges 
+                        or (repos[j], repos[i]) in g.edges
+                    )
+                    if not exists:
+                        g.add_edge(repos[i], repos[j])
+    
+    return g

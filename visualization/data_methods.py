@@ -122,7 +122,7 @@ def get_authors_graph():
     authors = __get_common_authors(df)
     g = nx.Graph()
 
-    repos = df[['repo_id', 'grids', 'repo_authors', 'repo_stars']]
+    repos = df[['repo_id', 'grids', 'topics', 'repo_authors', 'repo_stars']]
     repos.drop_duplicates()
 
     for row in repos.iterrows():
@@ -134,6 +134,7 @@ def get_authors_graph():
                 (name, {
                     'full_id': repo_id,
                     'stars': int(package['repo_stars']),
+                    'topics': package['topics'].split(',') if not pd.isna(package['topics']) else [],
                     'authors': int(package['repo_authors']),
                     'grids': package['grids'].split(',') if not pd.isna(package['grids']) else []
                 })])

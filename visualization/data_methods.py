@@ -85,17 +85,17 @@ def get_valid_dataframe():
     )
 
 
-def get_authors_dataframe():
-    filepath = '../data/django-packages-authors.csv'
-    df = pd.read_csv(filepath, sep=';')
-    df = df[df['author_email'].str.contains('dependabot') == False]
-    df = df[df['author_email'].str.contains('noreply') == False]
-    df = df[df['author_email'].str.contains('no.reply') == False]
-    df = df[df['author_email'].str.contains('no-reply') == False]
-    df = df[df['author_email'].str.contains('no author') == False]
-    df = df[df['author_email'].str.contains('github') == False]
-    df = df[df['author_email'].str.contains('none') == False]
-    return df[df['commits_count'] > 1]
+def get_authors_dataframes():
+    filepaths = (
+        '../data/django-packages-authors.csv', 
+        '../data/django-packages-authors-by-month.csv', 
+        '../data/django-packages-authors-by-year.csv'
+    )
+    return (
+        pd.read_csv(filepaths[0], sep=';'), 
+        pd.read_csv(filepaths[1], sep=';'), 
+        pd.read_csv(filepaths[2], sep=';')
+    )
 
 
 def get_authors_graph():
@@ -118,7 +118,7 @@ def get_authors_graph():
 
         return authors
 
-    df = get_authors_dataframe()
+    df = get_authors_dataframes()[0]
     authors = __get_common_authors(df)
     g = nx.Graph()
 

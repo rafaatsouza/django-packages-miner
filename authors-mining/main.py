@@ -35,21 +35,20 @@ def get_package_data(package_df_data: pd.Series):
                 and is_real_author(current.author.email) and current.authored_datetime
             )
             if valid:
-                key_by_month = current.authored_datetime.strftime("%Y-%m")
-                key_by_year = current.authored_datetime.strftime("%Y")
-
                 email = current.author.email
-                if email in authors:
-                    authors[email]['commits'] = authors[email]['commits'] + 1
-                else:
-                    authors[email] = {
-                        'commits': 1,
-                        'name': current.author.name or email[0:email.find('@')]
-                    }
+                if current.authored_datetime.year >= 2021:
+                    if email in authors:
+                        authors[email]['commits'] = authors[email]['commits'] + 1
+                    else:
+                        authors[email] = {
+                            'commits': 1,
+                            'name': current.author.name or email[0:email.find('@')]
+                        }
                 if (
                     current.authored_datetime.year >= 2014 
                     and (current.authored_datetime.year < 2022 or current.authored_datetime.month < 6)
                 ):
+                    key_by_month = current.authored_datetime.strftime("%Y-%m")
                     if key_by_month in authors_by_month and email not in authors_by_month[key_by_month]['emails']:
                         authors_by_month[key_by_month]['emails'].append(email)
                     elif key_by_month not in authors_by_month:
@@ -57,6 +56,7 @@ def get_package_data(package_df_data: pd.Series):
                             'emails': [email]
                         }
                 if current.authored_datetime.year >= 2014 and current.authored_datetime.year <= 2021:
+                    key_by_year = current.authored_datetime.strftime("%Y")
                     if key_by_year in authors_by_year and email not in authors_by_year[key_by_year]['emails']:
                         authors_by_year[key_by_year]['emails'].append(email)
                     elif key_by_year not in authors_by_year:

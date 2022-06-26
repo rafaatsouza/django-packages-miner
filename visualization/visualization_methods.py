@@ -79,3 +79,35 @@ class VisualizationMethods:
         ax.set_xticklabels(keys, rotation=45, ha='right')
         ax.set_title(title)
         ax.grid()
+
+    
+    @staticmethod
+    def get_data_for_plotly_graph(graph, pos):
+        import plotly.graph_objects as go
+
+        edge_x = []
+        edge_y = []
+        for edge in graph.edges():
+            x0, y0 = pos[edge[0]]
+            x1, y1 = pos[edge[1]]
+            edge_x.append(x0)
+            edge_x.append(x1)
+            edge_x.append(None)
+            edge_y.append(y0)
+            edge_y.append(y1)
+            edge_y.append(None)
+
+        edge_trace = go.Scatter(
+            x=edge_x, y=edge_y,
+            line=dict(width=0.5, color='#888'),
+            hoverinfo='none',
+            mode='lines')
+
+        node_x = []
+        node_y = []
+        for node in graph.nodes():
+            x, y = pos[node]
+            node_x.append(x)
+            node_y.append(y)
+
+        return edge_trace, node_x, node_y

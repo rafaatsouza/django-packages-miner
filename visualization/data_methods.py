@@ -25,9 +25,6 @@ def get_defined_dataframe():
 
     removed_packages = [
         'wooey/Wooey', # Django app that creates automatic web UIs for Python scripts
-        'django/django', # Django framework
-        'gunthercox/ChatterBot', # ML conversational dialog engine for creating chatbots
-        'mirumee/saleor', # ecommerce platform built on Django
         'pinax/pinax',
         'strawberry-graphql/strawberry',
         'shuup/shuup',
